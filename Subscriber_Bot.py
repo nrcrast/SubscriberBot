@@ -83,8 +83,15 @@ How to interact with Subscriber_Bot:
 
                         """)
 
+            elif splitMsg[0] == "list":
+                # List subscriptions
+                msg = """Subscriptions: 
 
+                """
+                for sub in self.db.execute("select subscriber from subscribers where user = ?",[str(msg.author)]):
+                    msg += "/u/{}\n".format(sub[0])
 
+                self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", msg ) 
 
 class Notifier:
 
