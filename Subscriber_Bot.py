@@ -27,12 +27,6 @@ class SubScriber:
     def processMention( self, author, msgBody ):
         user = msgBody.split(" ")[1]
 
-        # Get last post of user
-        lastPost = self.getLastPost( user )
-
-        # Is user in database
-        print("In DB: {}".format(self.isUserInDb(user)))
-        print("Subscribed: {}".format(self.isAuthorAlreadySubscribed(user,author)))
         if not self.isAuthorAlreadySubscribed( user, author ):
             print("Subscribing to {}".format(user))
             self.subscribe( user, author )
@@ -124,12 +118,9 @@ class Notifier:
 
     def notifySubscribers( self ):
         for user in self.getUsers():
-            print("Processing user: {}".format(user))
             newPosts = self.getNewPosts( user )
 
             if newPosts:
-                print("New Post: {}".format(newPosts[0]))
-                # Save the first new post
                 # TODO nick make a common function class or something. Not currently organized very well.
                 self.db.execute("delete from users where user = ?", [str(user)] )
                 self.db.execute("insert into users(user,lastpostid) values(?,?)", [str(user),str(newPosts[0])])
@@ -148,6 +139,8 @@ reader = SubScriber(config)
 notifier = Notifier(config)
 
 while True:
+
+    # TODO nick these could run in threads if you're feeling frisky
     reader.processInbox()
     notifier.notifySubscribers()
-    time.sleep(10)
+    time.sleep(5)
