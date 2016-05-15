@@ -109,17 +109,6 @@ class Notifier:
     		    	 r.send_message(subsriber, "New post from /u/{}".format(user), 
     		    	 	"Hi! User /u/{} has posted a new submission: {}".format(user, r.get_submission(submission_id = post ).permalink))
 
-
-
-
-# r = praw.Reddit(user_agent='python:AutoSubscriber:v0.1 (by /u/elpantalla)')
-
-# r.login('Subscriber_Bot', 'Reptar1!', disable_warning=True)
-
-# for msg in r.get_mentions( limit=None ):
-#       processMention( r, msg.author, msg.body )
-
 bot = SubScriber()
-#print(bot.checkForMentions())
 notifier = Notifier()
 print(notifier.getSubscribers('elpantalla'))
