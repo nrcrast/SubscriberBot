@@ -118,7 +118,7 @@ How to interact with Subscriber_Bot:
                 subscriptions = """Subscriptions: 
 
 """
-                for sub in self.db.execute("select subscriber from subscribers where user = ?",[str(msg.author)]):
+                for sub in self.db.execute("select user from subscribers where subscriber = ?",[str(msg.author)]):
                     subscriptions += "/u/{}\n\n".format(sub[0])
 
                 self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
@@ -180,4 +180,4 @@ while True:
     # TODO nick these could run in threads if you're feeling frisky
     reader.processInbox()
     notifier.notifySubscribers()
-    time.sleep(5)
+    time.sleep(1)
