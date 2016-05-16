@@ -30,13 +30,13 @@ class SubScriber:
         if not self.isAuthorAlreadySubscribed( user, author ):
             self.subscribe( user, author )
             self.updateLastPost( user )
-            self.reddit.send_message(msg.author, "Subscriber_Bot Subscription Confirmation - {}".format(user), 
+            self.reddit.send_message(author, "Subscriber_Bot Subscription Confirmation - {}".format(user), 
                 "Hi! You have been successfully subscribed to /u/{}".format(user)) 
 
     def processUnsubscribeCmd( self, author, user ):
         self.db.execute("delete from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
         self.conn.commit()
-        self.reddit.send_message(msg.author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user), 
+        self.reddit.send_message(author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user), 
                 "Hi! You have been successfully unsubscribed from /u/{}".format(user)) 
 
     def updateLastPost( self, user ):
