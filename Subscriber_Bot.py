@@ -28,13 +28,16 @@ class SubScriber:
 
     def processSubscribeCmd( self, author, user ):
         if not self.isAuthorAlreadySubscribed( user, author ):
-            print("Subscribing to {}".format(user))
             self.subscribe( user, author )
             self.updateLastPost( user )
+            self.reddit.send_message(msg.author, "Subscriber_Bot Subscription Confirmation - {}".format(user), 
+                "Hi! You have been successfully subscribed to /u/{}".format(user)) 
 
     def processUnsubscribeCmd( self, author, user ):
         self.db.execute("delete from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
         self.conn.commit()
+        self.reddit.send_message(msg.author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user), 
+                "Hi! You have been successfully unsubscribed from /u/{}".format(user)) 
 
     def updateLastPost( self, user ):
         self.db.execute("delete from users where user = ?", [str(user)] )
@@ -89,11 +92,24 @@ Subscriber_Bot is designed to allow you to be notified whenever a user of intere
 
 How to interact with Subscriber_Bot:
 
-1.) Reply to any post with the phrase: '/u/Subscriber_Bot [user to subscribe to]' (eg. /u/Subscriber_Bot elpantalla to subscribe to elpantalla's posts)
+1.) Subscribing to a user
 
-2.) Send /u/Subscriber_Bot a personal message with the same syntax
+   * Reply to any post with syntax /u/Subscriber_Bot subscribe [username]
 
-3.) Send 'help' to Subscriber_Bot to receive this message
+   * Send PM to /u/Subscriber_Bot with same syntax (you can leave /u/Subscriber_Bot out of msg body or keep it in)
+
+2.) Unsubscribing from a user
+
+   * Same as subscribing, except replace 'subscribe' with 'unsubscribe'
+
+3.) Help
+
+   * Send PM to /u/Subscriber_Bot with 'help' as msg body
+
+4.) Who am I subscribed to?
+   
+   * Send PM to /u/Subscriber_Bot with 'list' as msg body
+
 
                         """)
 
