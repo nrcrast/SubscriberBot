@@ -80,7 +80,7 @@ class SubScriber:
                 self.processSubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "unsubscribe":
-                self.processYnsubscribeCmd( msg.author, splitMsg[1] )
+                self.processUnsubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "help":
                 # Reply with help
