@@ -17,26 +17,35 @@ class SubScriber:
 
     def getLastPost( self, user ):
         redditor = self.reddit.get_redditor( user )
-        comment = redditor.get_submitted(sort='new', time='all', limit=1)
-        for c in comment:
-            return c.id
+
+        if redditor:
+            comment = redditor.get_submitted(sort='new', time='all', limit=1)
+            for c in comment:
+                return c.id
 
         return None
 
 
-    def processMention( self, author, msgBody ):
-        user = msgBody.split(" ")[1]
-
+    def processSubscribeCmd( self, author, user ):
         if not self.isAuthorAlreadySubscribed( user, author ):
             print("Subscribing to {}".format(user))
             self.subscribe( user, author )
             self.updateLastPost( user )
 
+    def processUnsubscribeCmd( self, author, user ):
+        self.db.execute("delete from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
+        self.conn.commit()
+
     def updateLastPost( self, user ):
-        if self.getLastPost( user ) != None:
-            self.db.execute("delete from users where user = ?", [str(user)] )
+        self.db.execute("delete from users where user = ?", [str(user)] )
+        
+        if self.getLastPost( user ):
             self.db.execute("insert into users(user,lastpostid) values(?,?)", [str(user),str(self.getLastPost(user))] )
-            self.conn.commit();
+        else:
+            self.db.execute("insert into users(user,lastpostid) values(?,'None')", [str(user),] )
+
+        self.conn.commit();
+
 
     def subscribe( self, user, author ):
         self.db.execute("insert into subscribers(user, subscriber) values(?, ?)", [str(user), str(author)] )
@@ -62,8 +71,13 @@ class SubScriber:
             msg.mark_as_read()
 
             if splitMsg[0] == "/u/Subscriber_Bot":
-                print("Found mention by {}: {}".format(msg.author, msg.body))
-                self.processMention( msg.author, msg.body )
+                splitMsg.remove("/u/Subscriber_Bot")
+
+            if splitMsg[0] == "subscribe":
+                self.processSubscribeCmd( msg.author, splitMsg[1] )
+
+            elif splitMsg[0] == "unsubscribe":
+                self.processYnsubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "help":
                 # Reply with help
