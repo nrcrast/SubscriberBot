@@ -78,16 +78,16 @@ class SubScriber:
                 splitMsg.remove("/u/Subscriber_Bot")
 
             if splitMsg[0] == "subscribe":
-                logger.debug("Received subscribe cmd from {}".format(msg.author))
+                logging.debug("Received subscribe cmd from {}".format(msg.author))
                 self.processSubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "unsubscribe":
-                logger.debug("Received unsubscribe cmd from {}".format(msg.author))
+                logging.debug("Received unsubscribe cmd from {}".format(msg.author))
                 self.processUnsubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "help":
                 # Reply with help
-                logger.debug("Received help cmd from {}".format(msg.author))
+                logging.debug("Received help cmd from {}".format(msg.author))
                 self.reddit.send_message(msg.author, "Subscriber_Bot Help", 
                         """Hi! Glad you're interested in Subscriber_Bot. 
 
@@ -118,7 +118,7 @@ How to interact with Subscriber_Bot:
 
             elif splitMsg[0] == "list":
                 # List subscriptions
-                logger.debug("Received list cmd from {}".format(msg.author))
+                logging.debug("Received list cmd from {}".format(msg.author))
                 subscriptions = """Subscriptions: 
 
 """
@@ -127,7 +127,7 @@ How to interact with Subscriber_Bot:
 
                 self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
             else:
-                logger.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
+                logging.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
 
 class Notifier:
 
@@ -173,7 +173,7 @@ class Notifier:
                 # Notify subscribers
                 for subscriber in self.getSubscribers( user ):
                     for post in newPosts:
-                        logger.debug("Notifying user {} of new post {}".format(user, post))
+                        logging.debug("Notifying user {} of new post {}".format(user, post))
                         
                         # Try a few times
                         for attempt in range(10):
@@ -190,15 +190,15 @@ class Notifier:
                                 try: 
                                     self.reddit.send_message(subscriber, postSubject, postContent )
                                 except:
-                                    logger.error("Unexpected error while sending msg: {}".format(sys.exc_info()[0]))
+                                    logging.error("Unexpected error while sending msg: {}".format(sys.exc_info()[0]))
                                 else:
                                     break
                             except:
-                                logger.error("Unexpected error while getting user's post: {}".format(sys.exc_info()[0]))
+                                logging.error("Unexpected error while getting user's post: {}".format(sys.exc_info()[0]))
                             else:
                                 break
                         else:
-                            logger.error("Failed to notify user after 10 tries")
+                            logging.error("Failed to notify user after 10 tries")
 
 
 logging.basicConfig( filename='subscriberbot.log', level=logging.DEBUG, format='%(asctime)s [%(levelname)s]: %(message)s' )
