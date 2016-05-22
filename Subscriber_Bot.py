@@ -26,10 +26,10 @@ class SubScriber:
                     comment = redditor.get_submitted(sort='new', time='all', limit=1)
                     for c in comment:
                         return c.id
-                    except:
-                        logging.error("Error getting last post for user {}".format(user))
-                    else:
-                        break
+                except:
+                    logging.error("Error getting last post for user {}".format(user))
+                else:
+                    break
             else:
                 logging.error("Failed to get last post for user {} after 10 attempts".format(user))
         return None
