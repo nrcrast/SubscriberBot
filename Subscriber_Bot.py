@@ -4,6 +4,7 @@ import yaml
 import pprint
 import time
 import logging
+import sys
 
 class SubScriber:
 
@@ -178,7 +179,7 @@ class Notifier:
                         # Try a few times
                         for attempt in range(10):
                             try:
-                                postInfo = self.reddit.get_submission(submission_id = post )
+                                postInfo = self.reddit.get_submission( submission_id = post )
                                 postSubject = "New post from /u/{} - {}".format(user,postInfo.title)
 
                                 # Reddit has a max subject length of 100. Lame
