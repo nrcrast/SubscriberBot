@@ -21,10 +21,17 @@ class SubScriber:
         redditor = self.reddit.get_redditor( user )
 
         if redditor:
-            comment = redditor.get_submitted(sort='new', time='all', limit=1)
-            for c in comment:
-                return c.id
-
+            for attempt in range(10):
+                try:                
+                comment = redditor.get_submitted(sort='new', time='all', limit=1)
+                for c in comment:
+                    return c.id
+                except:
+                    logging.error("Error getting last post for user {}".format(user))
+                else:
+                    break
+            else:
+                logging.error("Failed to get last post for user {} after 10 attempts".format(user))
         return None
 
 
@@ -70,27 +77,29 @@ class SubScriber:
         return False
 
     def processInbox( self ):
-        for msg in self.reddit.get_unread( limit=None ):
-            # First token should be username
-            splitMsg = msg.body.split(" ")
-            msg.mark_as_read()
+        for attempt in range(10):
+            try:
+                for msg in self.reddit.get_unread( limit=None ):
+                    # First token should be username
+                    splitMsg = msg.body.split(" ")
+                    msg.mark_as_read()
 
-            if splitMsg[0] == "/u/Subscriber_Bot":
-                splitMsg.remove("/u/Subscriber_Bot")
+                    if splitMsg[0] == "/u/Subscriber_Bot":
+                        splitMsg.remove("/u/Subscriber_Bot")
 
-            if splitMsg[0] == "subscribe":
-                logging.debug("Received subscribe cmd from {}".format(msg.author))
-                self.processSubscribeCmd( msg.author, splitMsg[1] )
+                    if splitMsg[0] == "subscribe":
+                        logging.debug("Received subscribe cmd from {}".format(msg.author))
+                        self.processSubscribeCmd( msg.author, splitMsg[1] )
 
-            elif splitMsg[0] == "unsubscribe":
-                logging.debug("Received unsubscribe cmd from {}".format(msg.author))
-                self.processUnsubscribeCmd( msg.author, splitMsg[1] )
+                    elif splitMsg[0] == "unsubscribe":
+                        logging.debug("Received unsubscribe cmd from {}".format(msg.author))
+                        self.processUnsubscribeCmd( msg.author, splitMsg[1] )
 
-            elif splitMsg[0] == "help":
-                # Reply with help
-                logging.debug("Received help cmd from {}".format(msg.author))
-                self.reddit.send_message(msg.author, "Subscriber_Bot Help", 
-                        """Hi! Glad you're interested in Subscriber_Bot. 
+                    elif splitMsg[0] == "help":
+                        # Reply with help
+                        logging.debug("Received help cmd from {}".format(msg.author))
+                        self.reddit.send_message(msg.author, "Subscriber_Bot Help", 
+                                """Hi! Glad you're interested in Subscriber_Bot. 
 
 Subscriber_Bot is designed to allow you to be notified whenever a user of interest submits a new post.
 
@@ -115,20 +124,27 @@ How to interact with Subscriber_Bot:
    * Send PM to /u/Subscriber_Bot with 'list' as msg body
 
 
-                        """)
+                                """)
 
-            elif splitMsg[0] == "list":
-                # List subscriptions
-                logging.debug("Received list cmd from {}".format(msg.author))
-                subscriptions = """Subscriptions: 
+                    elif splitMsg[0] == "list":
+                        # List subscriptions
+                        logging.debug("Received list cmd from {}".format(msg.author))
+                        subscriptions = """Subscriptions: 
 
-"""
-                for sub in self.db.execute("select user from subscribers where subscriber = ?",[str(msg.author)]):
-                    subscriptions += "/u/{}\n\n".format(sub[0])
+        """
+                        for sub in self.db.execute("select user from subscribers where subscriber = ?",[str(msg.author)]):
+                            subscriptions += "/u/{}\n\n".format(sub[0])
 
-                self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
+                        self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
+                    else:
+                        logging.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
+
+            except:
+                logging.error("Error processing inbox")
             else:
-                logging.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
+                break
+        else:
+            logging.error("Failed to process inbox after 10 tries")
 
 class Notifier:
 
@@ -163,7 +179,16 @@ class Notifier:
 
     def notifySubscribers( self ):
         for user in self.getUsers():
-            newPosts = self.getNewPosts( user )
+            
+            for attempt in range (10):
+                try:
+                    newPosts = self.getNewPosts( user )
+                except:
+                    logging.error("Unexpected error getting new posts for user {}".format(user))
+                else:
+                    break
+            else:
+                logging.error("Failed ot get new posts for user {} after 10 tries".format(user))
 
             if newPosts:
                 # TODO nick make a common function class or something. Not currently organized very well.
