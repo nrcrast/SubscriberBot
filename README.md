@@ -1,7 +1,7 @@
 # SubscriberBot
 
 # Overview
-SubscriberBot is a reddit bot designed to allow users to subscribe to other users. When a user makes a new post, all users that have subscribed to that user are sent a personal message with a link and title of the new post. 
+SubscriberBot is a Reddit bot designed to allow users to subscribe to other users. When a user makes a new post, all users that have subscribed to that user are sent a personal message with a link and title of the new post. 
 
 # Usage
 SubscriberBot can be interacted with via PM or by summoning it in a comment. 
@@ -18,8 +18,8 @@ SubscriberBot can be interacted with via PM or by summoning it in a comment.
 
 ## Help
 
-   * Send PM to /u/Subscriber_Bot with 'help' as msg body
+   * Send PM to /u/Subscriber_Bot with 'help' as msg body (subject can be anything)
 
 ## Who am I subscribed to?
    
-   * Send PM to /u/Subscriber_Bot with 'list' as msg body
+   * Send PM to /u/Subscriber_Bot with 'list' as msg body (subject can be anything)

@@ -3,6 +3,7 @@ import sqlite3
 import yaml
 import pprint
 import time
+import logging
 
 class SubScriber:
 
@@ -13,7 +14,7 @@ class SubScriber:
         print("DB Path: {}".format(config['databasePath']))
         self.conn = sqlite3.connect(config['databasePath'])
         self.db = self.conn.cursor()
-
+        logging.info("Initialized Subscriber")
 
     def getLastPost( self, user ):
         redditor = self.reddit.get_redditor( user )
@@ -77,14 +78,16 @@ class SubScriber:
                 splitMsg.remove("/u/Subscriber_Bot")
 
             if splitMsg[0] == "subscribe":
+                logger.debug("Received subscribe cmd from {}".format(msg.author))
                 self.processSubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "unsubscribe":
+                logger.debug("Received unsubscribe cmd from {}".format(msg.author))
                 self.processUnsubscribeCmd( msg.author, splitMsg[1] )
 
             elif splitMsg[0] == "help":
                 # Reply with help
-                print("Sending help to {}".format(msg.author))
+                logger.debug("Received help cmd from {}".format(msg.author))
                 self.reddit.send_message(msg.author, "Subscriber_Bot Help", 
                         """Hi! Glad you're interested in Subscriber_Bot. 
 
@@ -115,6 +118,7 @@ How to interact with Subscriber_Bot:
 
             elif splitMsg[0] == "list":
                 # List subscriptions
+                logger.debug("Received list cmd from {}".format(msg.author))
                 subscriptions = """Subscriptions: 
 
 """
@@ -122,6 +126,8 @@ How to interact with Subscriber_Bot:
                     subscriptions += "/u/{}\n\n".format(sub[0])
 
                 self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
+            else:
+                logger.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
 
 class Notifier:
 
@@ -131,6 +137,7 @@ class Notifier:
         self.reddit.login(config['reddit']['username'], config['reddit']['password'], disable_warning=True)
         self.conn = sqlite3.connect(config['databasePath'])
         self.db = self.conn.cursor()
+        logging.info("Initialized Notifier")
 
     def getSubscribers( self, user ):
         return [sub[0] for sub in self.db.execute("select subscriber from subscribers where user = ?",[str(user)])]
@@ -165,12 +172,36 @@ class Notifier:
 
                 # Notify subscribers
                 for subscriber in self.getSubscribers( user ):
-                    print("Notifying: {}".format(subscriber))
                     for post in newPosts:
-                        postInfo = self.reddit.get_submission(submission_id = post )
-                        self.reddit.send_message(subscriber, "New post from /u/{} - {}".format(user,postInfo.title), 
-                        "Hi! User /u/{} has posted a new submission: [{}]({})".format(user, postInfo.title, postInfo.permalink))
+                        logger.debug("Notifying user {} of new post {}".format(user, post))
+                        
+                        # Try a few times
+                        for attempt in range(10):
+                            try:
+                                postInfo = self.reddit.get_submission(submission_id = post )
+                                postSubject = "New post from /u/{} - {}".format(user,postInfo.title)
 
+                                # Reddit has a max subject length of 100. Lame
+                                if( len(postInfo) > 100 ):
+                                    postInfo = "New post from /u/{}".format(user)
+
+                                postContent = "Hi! User /u/{} has posted a new submission: [{}]({})".format(user, postInfo.title, postInfo.permalink)
+                                
+                                try: 
+                                    self.reddit.send_message(subscriber, postSubject, postContent )
+                                except:
+                                    logger.error("Unexpected error while sending msg: {}".format(sys.exc_info()[0]))
+                                else:
+                                    break
+                            except:
+                                logger.error("Unexpected error while getting user's post: {}".format(sys.exc_info()[0]))
+                            else:
+                                break
+                        else:
+                            logger.error("Failed to notify user after 10 tries")
+
+
+logging.basicConfig( filename='subscriberbot.log', level=logging.DEBUG, format='%(asctime)s [%(levelname)s]: %(message)s' )
 config = yaml.load(file('config.yaml','r'))
 reader = SubScriber(config)
 notifier = Notifier(config)
