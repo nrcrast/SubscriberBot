@@ -3,6 +3,15 @@
 # Overview
 SubscriberBot is a Reddit bot designed to allow users to subscribe to other users. When a user makes a new post, all users that have subscribed to that user are sent a personal message with a link and title of the new post. 
 
+# Dependencies
+* Python 2.7.x
+* PyYaml
+* Praw
+* Sqlite3
+
+# Configuration
+SubscriberBot expects a configuration file called config.yaml. See configtemplate.yaml for the format.
+
 # Usage
 SubscriberBot can be interacted with via PM or by summoning it in a comment. 
 

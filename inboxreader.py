@@ -192,7 +192,7 @@ How to interact with Subscriber_Bot:
                         logging.debug("Received list cmd from {}".format(msg.author))
                         subscriptions = """Subscriptions: 
 
-        """
+"""
                         for sub in self.db.execute("select user from subscribers where subscriber = ?",[str(msg.author)]):
                             subscriptions += "/u/{}\n\n".format(sub[0])
 

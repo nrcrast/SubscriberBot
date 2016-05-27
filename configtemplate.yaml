@@ -1,0 +1,5 @@
+reddit:
+  username: myusername
+  password: mypassword
+
+databasePath: /home/ubuntu/SubscriberBot/subscriptions.db

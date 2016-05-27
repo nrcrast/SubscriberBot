@@ -43,7 +43,7 @@ class Notifier:
                 try:
                     newPosts = self.getNewPosts( user )
                 except:
-                    logging.error("Unexpected error getting new posts for user {}".format(user))
+                    logging.error("Unexpected error({}) getting new posts for user {}".format(sys.exc_info()[0],user))
                 else:
                     break
             else:
@@ -63,11 +63,11 @@ class Notifier:
                         # Try a few times
                         for attempt in range(10):
                             try:
-                                postInfo = self.reddit.get_submission( submission_id = post )
-                                postSubject = "New post from /u/{} - {}".format(user,postInfo.title)
-
+                                postInfo = self.reddit.get_submission( submission_id = str(post) )
+			  	postSubject = "New post from /u/{} - {}".format(user,postInfo.title)
+				
                                 # Reddit has a max subject length of 100. Lame
-                                if( len(postInfo) > 100 ):
+                                if( len(postInfo.title) > 100 ):
                                     postInfo = "New post from /u/{}".format(user)
 
                                 postContent = "Hi! User /u/{} has posted a new submission: [{}]({})".format(user, postInfo.title, postInfo.permalink)
@@ -78,8 +78,8 @@ class Notifier:
                                     logging.error("Unexpected error while sending msg: {}".format(sys.exc_info()[0]))
                                 else:
                                     break
-                            except:
-                                logging.error("Unexpected error while getting user's post: {}".format(sys.exc_info()[0]))
+                            except Exception, e:
+                                logging.error("Unexpected error while getting user's post: {}".format(str(e)))
                             else:
                                 break
                         else:
