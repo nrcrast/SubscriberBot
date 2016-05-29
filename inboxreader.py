@@ -6,18 +6,18 @@ import sqlite3
 import praw
 from subscriberbotbase import SubscriberBot
 
-class InboxReader(SubscriberBot):
 
+class InboxReader(SubscriberBot):
     def __init__(self, config, CONSTANTS):
-        super( InboxReader, self ).__init__(config, CONSTANTS)
+        super(InboxReader, self).__init__(config, CONSTANTS)
         logging.info("Initialized Subscriber")
 
-
-    def getCurrentSubscriptionType( self, user, author ):
-        subscription = self.db.execute("select subscriptionType from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
+    def getCurrentSubscriptionType(self, user, author):
+        subscription = self.db.execute("select subscriptionType from subscribers where user = ? and subscriber = ?",
+                                       [str(user), str(author)])
         return subscription.fetchone()
 
-    def subscriptionTypeToInt( self, subscriptionType ):
+    def subscriptionTypeToInt(self, subscriptionType):
         """Convert subscription type string to bitmapped integer
 
         Bit 0 => Comments
@@ -33,7 +33,7 @@ class InboxReader(SubscriberBot):
 
         return typeInt
 
-    def processSubscribeCmd( self, author, user, subscriptionType ):
+    def processSubscribeCmd(self, author, user, subscriptionType):
         """Subscribe to a user's posts
 
         Args:
@@ -44,13 +44,14 @@ class InboxReader(SubscriberBot):
         """
 
         # If the user is not subscribed or the subscription type is changing
-        if (not self.isAuthorAlreadySubscribed( user, author )) or (self.subscriptionTypeToInt(subscriptionType) != getCurrentSubscriptionType( user, author )):
-            self.subscribe( user, author, self.subscriptionTypeToInt(subscriptionType) )
-            self.updateLastPost( user )
-            self.reddit.send_message(author, "Subscriber_Bot Subscription Confirmation - {}".format(user), 
-                "Hi! You have been successfully subscribed to /u/{}".format(user)) 
+        if (not self.isAuthorAlreadySubscribed(user, author)) or (
+                self.subscriptionTypeToInt(subscriptionType) != getCurrentSubscriptionType(user, author)):
+            self.subscribe(user, author, self.subscriptionTypeToInt(subscriptionType))
+            self.updateLastPost(user)
+            self.reddit.send_message(author, "Subscriber_Bot Subscription Confirmation - {}".format(user),
+                                     "Hi! You have been successfully subscribed to /u/{}".format(user))
 
-    def processUnsubscribeCmd( self, author, user ):
+    def processUnsubscribeCmd(self, author, user):
         """Unsubscribe from a user's posts
 
         Args:
@@ -59,12 +60,12 @@ class InboxReader(SubscriberBot):
         Returns:
             None
         """
-        self.db.execute("delete from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
+        self.db.execute("delete from subscribers where user = ? and subscriber = ?", [str(user), str(author)])
         self.conn.commit()
-        self.reddit.send_message(author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user), 
-                "Hi! You have been successfully unsubscribed from /u/{}".format(user)) 
+        self.reddit.send_message(author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user),
+                                 "Hi! You have been successfully unsubscribed from /u/{}".format(user))
 
-    def subscribe( self, user, author, subscriptionType ):
+    def subscribe(self, user, author, subscriptionType):
         """Add entry to subscribers database
 
         Args:
@@ -73,10 +74,11 @@ class InboxReader(SubscriberBot):
         Returns:
             None
         """
-        self.db.execute("insert into subscribers(user, subscriber, subscriptionType ) values(?, ?, ?)", [str(user), str(author), subscriptionType ] )
+        self.db.execute("insert into subscribers(user, subscriber, subscriptionType ) values(?, ?, ?)",
+                        [str(user), str(author), subscriptionType])
         self.conn.commit()
 
-    def isAuthorAlreadySubscribed( self, user, author ):
+    def isAuthorAlreadySubscribed(self, user, author):
         """Is the author already subscribed to this user?
 
         Args:
@@ -85,10 +87,10 @@ class InboxReader(SubscriberBot):
         Returns:
             True => Author is already subscribed    False => Author is not already subscribed
         """
-        users = self.db.execute("select * from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
+        users = self.db.execute("select * from subscribers where user = ? and subscriber = ?", [str(user), str(author)])
         return users.fetchone() != None
 
-    def isUserInDb( self, user ):
+    def isUserInDb(self, user):
         """Does this user already have a database entry?
 
         Args:
@@ -96,7 +98,7 @@ class InboxReader(SubscriberBot):
         Returns:
             True => User is already in the database     False => User is not already in the database
         """
-        users = self.db.execute( "select distinct user from subscribers")
+        users = self.db.execute("select distinct user from subscribers")
 
         for u in users:
             if user == u[0]:
@@ -104,7 +106,7 @@ class InboxReader(SubscriberBot):
 
         return False
 
-    def processInbox( self ):
+    def processInbox(self):
         """Process the bot's inbox, respond to any requests that it receives:
     
         Requests:
@@ -115,7 +117,7 @@ class InboxReader(SubscriberBot):
         """
         for attempt in range(10):
             try:
-                for msg in self.reddit.get_unread( limit=None ):
+                for msg in self.reddit.get_unread(limit=None):
                     # First token should be username
                     splitMsg = msg.body.split(" ")
                     msg.mark_as_read()
@@ -127,22 +129,22 @@ class InboxReader(SubscriberBot):
                         logging.debug("Received subscribe cmd from {}".format(msg.author))
                         subscriptionType = "submissions"
 
-                        if( len(splitMsg) >= 4 ):
+                        if (len(splitMsg) >= 4):
                             subscriptionType = splitMsg[2].lower() + splitMsg[3].lower()
-                        elif( len(splitMsg) >= 3 ):
+                        elif (len(splitMsg) >= 3):
                             subscriptionType = splitMsg[2].lower()
 
-                        self.processSubscribeCmd( msg.author, splitMsg[1], subscriptionType )
+                        self.processSubscribeCmd(msg.author, splitMsg[1], subscriptionType)
 
                     elif splitMsg[0] == "unsubscribe":
                         logging.debug("Received unsubscribe cmd from {}".format(msg.author))
-                        self.processUnsubscribeCmd( msg.author, splitMsg[1] )
+                        self.processUnsubscribeCmd(msg.author, splitMsg[1])
 
                     elif splitMsg[0] == "help":
                         # Reply with help
                         logging.debug("Received help cmd from {}".format(msg.author))
-                        self.reddit.send_message(msg.author, "Subscriber_Bot Help", 
-                                """Hi! Glad you're interested in Subscriber_Bot. 
+                        self.reddit.send_message(msg.author, "Subscriber_Bot Help",
+                                                 """Hi! Glad you're interested in Subscriber_Bot. 
 
 Subscriber_Bot is designed to allow you to be notified whenever a user of interest submits a new post.
 
@@ -175,10 +177,10 @@ How to interact with Subscriber_Bot:
                         subscriptions = """Subscriptions: 
 
 """
-                        for sub in self.db.execute("select user from subscribers where subscriber = ?",[str(msg.author)]):
+                        for sub in self.db.execute("select user from subscribers where subscriber = ?", [str(msg.author)]):
                             subscriptions += "/u/{}\n\n".format(sub[0])
 
-                        self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions ) 
+                        self.reddit.send_message(msg.author, "Subscriber_Bot Subscriptions", subscriptions)
                     else:
                         logging.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
 

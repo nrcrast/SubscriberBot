@@ -8,23 +8,34 @@ import notifier
 import sqlite3
 import praw
 
-def createDatabase( dbPath ):
-    conn = sqlite3.connect( dbPath );
+
+def createDatabase(dbPath):
+    conn = sqlite3.connect(dbPath)
     c = conn.cursor()
-    c.execute("create table if not exists subscribers ( id integer primary key autoincrement, user char(256) not null, subscriber char(256) not null, subscriptionType integer not null );")
-    c.execute("create table if not exists users ( id integer primary key autoincrement, user char(256) not null, lastsubmissionid char(256) not null, lastsubmissiondate integer not null, lastcommentid char(256) not null, lastcommentdate integer not null );")
+    c.execute(
+        "create table if not exists subscribers ( id integer primary key autoincrement, user char(256) not null, subscriber char(256) not null, subscriptionType integer not null );")
+    c.execute(
+        "create table if not exists users ( id integer primary key autoincrement, user char(256) not null, lastsubmissionid char(256) not null, lastsubmissiondate integer not null, lastcommentid char(256) not null, lastcommentdate integer not null );")
 
 # Bitmap for subscription type
-SUBSCRIPTION_TYPE = { "comments" : 1, "submissions" : 2}
+SUBSCRIPTION_TYPE = {"comments": 1, "submissions": 2}
 
 # Constants to make code more readable
-DATABASE_COLUMNS = { "subscriber": { "id" : 0, "user" : 1, "subscriber" : 2, "subscriptionType" : 3}, "users" : { "id" : 0, "user" : 1, "lastSubmissionId" : 2, "lastSubmissionDate" : 3, "lastCommentId" : 4 ,
-"lastCommentDate" : 5}}
+DATABASE_COLUMNS = {"subscriber": {"id": 0,
+                                   "user": 1,
+                                   "subscriber": 2,
+                                   "subscriptionType": 3},
+                    "users": {"id": 0,
+                              "user": 1,
+                              "lastSubmissionId": 2,
+                              "lastSubmissionDate": 3,
+                              "lastCommentId": 4,
+                              "lastCommentDate": 5}}
 
-CONSTANTS = { "DATABASE_COLUMNS" : DATABASE_COLUMNS, "SUBSCRIPTION_TYPE" : SUBSCRIPTION_TYPE }
+CONSTANTS = {"DATABASE_COLUMNS": DATABASE_COLUMNS, "SUBSCRIPTION_TYPE": SUBSCRIPTION_TYPE}
 
-logging.basicConfig( filename='subscriberbot.log', level=logging.DEBUG, format='%(asctime)s [%(levelname)s]: %(message)s' )
-config = yaml.load(file('config.yaml','r'))
+logging.basicConfig(filename='subscriberbot.log', level=logging.DEBUG, format='%(asctime)s [%(levelname)s]: %(message)s')
+config = yaml.load(file('config.yaml', 'r'))
 createDatabase(config["databasePath"])
 reader = inboxreader.InboxReader(config, CONSTANTS)
 notifier = notifier.Notifier(config, CONSTANTS)
