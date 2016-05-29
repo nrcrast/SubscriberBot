@@ -4,45 +4,36 @@ import logging
 import sys
 import sqlite3
 import praw
+from subscriberbotbase import SubscriberBot
 
-class InboxReader:
+class InboxReader(SubscriberBot):
 
-    def __init__(self, config):
-
-        self.reddit = praw.Reddit(user_agent='python:AutoSubscriber:v0.1 (by /u/elpantalla)')
-        self.reddit.login(config['reddit']['username'], config['reddit']['password'], disable_warning=True)
-        print("DB Path: {}".format(config['databasePath']))
-        self.conn = sqlite3.connect(config['databasePath'])
-        self.db = self.conn.cursor()
+    def __init__(self, config, CONSTANTS):
+        super( InboxReader, self ).__init__(config, CONSTANTS)
         logging.info("Initialized Subscriber")
 
-    def getLastPost( self, user ):
-        """Get the last submission by a user
 
-        Args:
-            user: The user to get submissions of
-        Returns:
-            The ID of the user's last submission
+    def getCurrentSubscriptionType( self, user, author ):
+        subscription = self.db.execute("select subscriptionType from subscribers where user = ? and subscriber = ?", [str(user),str(author)] )
+        return subscription.fetchone()
+
+    def subscriptionTypeToInt( self, subscriptionType ):
+        """Convert subscription type string to bitmapped integer
+
+        Bit 0 => Comments
+        Bit 1 => Submissions
         """
+        subscriptionType = subscriptionType.lower()
+        typeInt = 0
 
-        redditor = self.reddit.get_redditor( user )
+        if "comments" in subscriptionType:
+            typeInt |= self.CONSTANTS["SUBSCRIPTION_TYPE"]["comments"]
+        if "submissions" in subscriptionType:
+            typeInt |= self.CONSTANTS["SUBSCRIPTION_TYPE"]["submissions"]
 
-        if redditor:
-            for attempt in range(10):
-                try:                
-                    comment = redditor.get_submitted(sort='new', time='all', limit=1)
-                    for c in comment:
-                        return c.id
-                except:
-                    logging.error("Error getting last post for user {}".format(user))
-                else:
-                    break
-            else:
-                logging.error("Failed to get last post for user {} after 10 attempts".format(user))
-        return None
+        return typeInt
 
-
-    def processSubscribeCmd( self, author, user ):
+    def processSubscribeCmd( self, author, user, subscriptionType ):
         """Subscribe to a user's posts
 
         Args:
@@ -51,8 +42,10 @@ class InboxReader:
         Returns:
             None
         """
-        if not self.isAuthorAlreadySubscribed( user, author ):
-            self.subscribe( user, author )
+
+        # If the user is not subscribed or the subscription type is changing
+        if (not self.isAuthorAlreadySubscribed( user, author )) or (self.subscriptionTypeToInt(subscriptionType) != getCurrentSubscriptionType( user, author )):
+            self.subscribe( user, author, self.subscriptionTypeToInt(subscriptionType) )
             self.updateLastPost( user )
             self.reddit.send_message(author, "Subscriber_Bot Subscription Confirmation - {}".format(user), 
                 "Hi! You have been successfully subscribed to /u/{}".format(user)) 
@@ -71,25 +64,7 @@ class InboxReader:
         self.reddit.send_message(author, "Subscriber_Bot Unsubscribe Confirmation - {}".format(user), 
                 "Hi! You have been successfully unsubscribed from /u/{}".format(user)) 
 
-    def updateLastPost( self, user ):
-        """Update the database with the last post from a user
-
-        Args:
-            user: The user whose database entry is to be updated
-        Returns:
-            None
-        """
-        self.db.execute("delete from users where user = ?", [str(user)] )
-        
-        if self.getLastPost( user ):
-            self.db.execute("insert into users(user,lastpostid) values(?,?)", [str(user),str(self.getLastPost(user))] )
-        else:
-            self.db.execute("insert into users(user,lastpostid) values(?,'None')", [str(user),] )
-
-        self.conn.commit();
-
-
-    def subscribe( self, user, author ):
+    def subscribe( self, user, author, subscriptionType ):
         """Add entry to subscribers database
 
         Args:
@@ -98,7 +73,7 @@ class InboxReader:
         Returns:
             None
         """
-        self.db.execute("insert into subscribers(user, subscriber) values(?, ?)", [str(user), str(author)] )
+        self.db.execute("insert into subscribers(user, subscriber, subscriptionType ) values(?, ?, ?)", [str(user), str(author), subscriptionType ] )
         self.conn.commit()
 
     def isAuthorAlreadySubscribed( self, user, author ):
@@ -150,7 +125,14 @@ class InboxReader:
 
                     if splitMsg[0] == "subscribe":
                         logging.debug("Received subscribe cmd from {}".format(msg.author))
-                        self.processSubscribeCmd( msg.author, splitMsg[1] )
+                        subscriptionType = "submissions"
+
+                        if( len(splitMsg) >= 4 ):
+                            subscriptionType = splitMsg[2].lower() + splitMsg[3].lower()
+                        elif( len(splitMsg) >= 3 ):
+                            subscriptionType = splitMsg[2].lower()
+
+                        self.processSubscribeCmd( msg.author, splitMsg[1], subscriptionType )
 
                     elif splitMsg[0] == "unsubscribe":
                         logging.debug("Received unsubscribe cmd from {}".format(msg.author))
@@ -200,8 +182,8 @@ How to interact with Subscriber_Bot:
                     else:
                         logging.debug("Received erroneous cmd[{}] from {}".format(msg.body, msg.author))
 
-            except:
-                logging.error("Error processing inbox")
+            except Exception, e:
+                logging.error("Error processing inbox: {}".format(str(e)))
             else:
                 break
         else:
