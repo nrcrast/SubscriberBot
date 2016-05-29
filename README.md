@@ -19,7 +19,7 @@ SubscriberBot can be interacted with via PM or by summoning it in a comment.
 
    * Reply to any post with syntax /u/Subscriber_Bot subscribe [username] [subscriptiontype] where [submissiontype] can be any combination of the words "submissions" and "comments"
    	
-   	#eg. 
+   	  ###eg. 
 
 	  * /u/Subscriber_Bot subscribe elpantalla submissions => subscribes to new submissions by elpantalla
   
