@@ -152,7 +152,11 @@ How to interact with Subscriber_Bot:
 
 1.) Subscribing to a user
 
-   * Reply to any post with syntax /u/Subscriber_Bot subscribe [username]
+   * Reply to any post with syntax /u/Subscriber_Bot subscribe [username] [subscriptiontype] where [submissiontype] can be any combination of the words "submissions" and "comments"
+        eg. /u/Subscriber_Bot subscribe elpantalla submissions => subscribes to new submissions by elpantalla
+            /u/Subscriber_Bot subscribe elpantalla => subscribes to new submissions by elpantalla
+            /u/Subscriber_Bot subscribe elpantalla comments => subscribes to new comments by elpantalla
+            /u/Subscriber_Bot subscribe elpantalla comments submissions => subscribes to new comments and submissions by elpantalla
 
    * Send PM to /u/Subscriber_Bot with same syntax (you can leave /u/Subscriber_Bot out of msg body or keep it in)
 
